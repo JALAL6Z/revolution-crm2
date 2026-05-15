@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Briefcase, Bot, FileSearch,
   Megaphone, Receipt, Calendar, Settings, LogOut, Radar,
   Menu, Search, Activity as ActivityIcon, TrendingUp, PhoneCall, Target,
-  MoreHorizontal, BarChart3, Euro,
+  MoreHorizontal, BarChart3, Euro, Bell,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { canAccessPath, isAdminRole, roleLabel } from "@/lib/access";
 import { useCurrentRole } from "@/hooks/useCurrentRole";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -102,6 +103,8 @@ export default function AppLayout() {
     .slice(0, 2)
     .toUpperCase();
 
+  const { supported: pushSupported, subscribed: pushSubscribed, subscribe: subscribePush } = usePushNotifications();
+
   const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
     <div className="flex h-full flex-col">
       {/* Logo — fixe en haut */}
@@ -131,7 +134,24 @@ export default function AppLayout() {
             Paramètres
           </NavLink>
         )}
-        <div className="mt-2 flex items-center gap-3 rounded-lg p-2">
+        {/* Bouton notif push — visible par tous */}
+        {pushSupported && !pushSubscribed && (
+          <button
+            onClick={subscribePush}
+            className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all mb-1"
+          >
+            <Bell className="h-4 w-4 text-primary" />
+            <span>Activer les notifications</span>
+          </button>
+        )}
+        {pushSupported && pushSubscribed && (
+          <div className="flex items-center gap-3 px-3 py-1.5 text-xs text-success mb-1">
+            <Bell className="h-3.5 w-3.5" />
+            <span>Notifications activées</span>
+          </div>
+        )}
+
+        <div className="mt-1 flex items-center gap-3 rounded-lg p-2">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full gradient-primary text-sm font-semibold text-primary-foreground shadow-glow">
             {initials}
           </div>
