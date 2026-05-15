@@ -242,9 +242,21 @@ export default function Prospects() {
 
   const assignOne = async (id: string, assignedTo: string | null) => {
     if (!admin) return;
+    const prospect = prospects.find((p) => p.id === id);
     const { error } = await supabase.from("prospects").update({ assigned_to: assignedTo }).eq("id", id);
     if (error) { toast.error(error.message); return; }
     setProspects((prev) => prev.map((p) => p.id === id ? { ...p, assigned_to: assignedTo } : p));
+    if (assignedTo && prospect) {
+      supabase.functions.invoke("send-push", {
+        body: {
+          user_ids: [assignedTo],
+          title: "🎯 Nouveau prospect assigné",
+          body: `"${prospect.name}" vient de t'être assigné.`,
+          url: "/prospects",
+          tag: "prospect-assigned",
+        },
+      });
+    }
   };
 
   const assignableMembers = members.filter((member) => canReceiveProspects(member.role));
