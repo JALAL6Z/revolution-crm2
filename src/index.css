@@ -128,10 +128,10 @@
 
 @layer utilities {
   .crm-mobile-topbar {
-    min-height: calc(3.5rem + env(safe-area-inset-top, 0px));
+    min-height: calc(2.75rem + env(safe-area-inset-top, 0px));
     padding-top: env(safe-area-inset-top, 0px);
-    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
-    padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+    padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
   }
 
   .crm-sidebar-brand {
