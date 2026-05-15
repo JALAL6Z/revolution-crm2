@@ -103,14 +103,19 @@ export default function AppLayout() {
     .toUpperCase();
 
   const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
-    <>
-      <div className="crm-sidebar-brand flex items-center justify-center border-b border-sidebar-border px-5">
+    <div className="flex h-full flex-col">
+      {/* Logo — fixe en haut */}
+      <div className="crm-sidebar-brand flex shrink-0 items-center justify-center border-b border-sidebar-border px-5">
         <Logo size="h-12" glow />
       </div>
 
-      <NavLinks onNavigate={onNavigate} role={role} />
+      {/* Nav links — scrollable */}
+      <div className="flex-1 overflow-y-auto overscroll-contain">
+        <NavLinks onNavigate={onNavigate} role={role} />
+      </div>
 
-      <div className="border-t border-sidebar-border p-3">
+      {/* Footer — fixe en bas */}
+      <div className="shrink-0 border-t border-sidebar-border p-3 bg-sidebar">
         {isAdminRole(role) && (
           <NavLink
             to="/parametres"
@@ -126,20 +131,20 @@ export default function AppLayout() {
             Paramètres
           </NavLink>
         )}
-        <div className="mt-3 flex items-center gap-3 rounded-lg p-2">
+        <div className="mt-2 flex items-center gap-3 rounded-lg p-2">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full gradient-primary text-sm font-semibold text-primary-foreground shadow-glow">
             {initials}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-sidebar-foreground">{profile?.full_name || user?.email}</p>
-            <p className="truncate text-xs text-muted-foreground">{roleLabel(role)} · {user?.email}</p>
+            <p className="truncate text-xs text-muted-foreground">{roleLabel(role)}</p>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleSignOut} title="Se déconnecter">
+          <Button variant="ghost" size="icon" onClick={handleSignOut} title="Se déconnecter" className="shrink-0">
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </div>
-    </>
+    </div>
   );
 
   return (
@@ -151,7 +156,7 @@ export default function AppLayout() {
 
       {/* Mobile drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-72 border-sidebar-border bg-sidebar p-0 flex flex-col">
+        <SheetContent side="left" className="w-72 border-sidebar-border bg-sidebar p-0 h-full flex flex-col">
           <SidebarContent onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
