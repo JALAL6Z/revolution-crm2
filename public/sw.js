@@ -1,4 +1,4 @@
-const CACHE = "revolution-crm-v3";
+const CACHE = "revolution-crm-v4";
 
 self.addEventListener("install", () => self.skipWaiting());
 
