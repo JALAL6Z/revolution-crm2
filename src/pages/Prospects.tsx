@@ -224,6 +224,18 @@ export default function Prospects() {
     setAssigning(false);
     if (error) { toast.error(error.message); return; }
     toast.success(assignedTo ? "Prospects assignes" : "Assignation retiree");
+    // Notif push au setter
+    if (assignedTo) {
+      supabase.functions.invoke("send-push", {
+        body: {
+          user_ids: [assignedTo],
+          title: "🎯 Nouveaux prospects assignés",
+          body: `${ids.length} prospect${ids.length > 1 ? "s" : ""} vien${ids.length > 1 ? "nent" : "t"} de t'être assigné${ids.length > 1 ? "s" : ""}.`,
+          url: "/prospects",
+          tag: "prospects-assigned",
+        },
+      });
+    }
     setSelectedIds(new Set());
     fetch();
   };

@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { Settings as SettingsIcon, Save, Users, Key, Loader2, Shield, Check, X, TestTube2, Sparkles, PlugZap, UserPlus } from "lucide-react";
+import { Settings as SettingsIcon, Save, Users, Key, Loader2, Shield, Check, X, TestTube2, Sparkles, PlugZap, UserPlus, Bell, BellOff } from "lucide-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { AI_PROVIDER_CATALOG, FREE_SMMA_TOOLS, INTEGRATION_CHOICES } from "@/lib/integrations";
@@ -225,6 +226,8 @@ export default function Parametres() {
   const aiRowsByProvider = useMemo(() => Object.fromEntries(integrationRows.map((row) => [row.provider, row])), [integrationRows]);
   const aiStatusByProvider = useMemo(() => Object.fromEntries(integrationStatuses.map((status) => [status.provider, status])), [integrationStatuses]);
 
+  const { supported: pushSupported, subscribed: pushSubscribed, subscribe: subscribePush } = usePushNotifications();
+
   if (loading) return <div className="flex h-64 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
@@ -249,6 +252,35 @@ export default function Parametres() {
                 Enregistrer
               </Button>
             </Card>
+
+            {/* Notifications push */}
+            {pushSupported && (
+              <Card className="max-w-xl mt-4 p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${pushSubscribed ? "bg-success/15" : "bg-muted"}`}>
+                      {pushSubscribed ? <Bell className="h-5 w-5 text-success" /> : <BellOff className="h-5 w-5 text-muted-foreground" />}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Notifications push</p>
+                      <p className="text-xs text-muted-foreground">
+                        {pushSubscribed ? "Activées — vous recevrez les alertes" : "Recevez les alertes prospects et commissions"}
+                      </p>
+                    </div>
+                  </div>
+                  {!pushSubscribed && (
+                    <Button size="sm" variant="hero" onClick={subscribePush}>
+                      <Bell className="h-4 w-4" /> Activer
+                    </Button>
+                  )}
+                  {pushSubscribed && (
+                    <span className="text-xs text-success font-semibold flex items-center gap-1">
+                      <Check className="h-3.5 w-3.5" /> Activées
+                    </span>
+                  )}
+                </div>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="team">

@@ -137,6 +137,7 @@ export default function Commissions() {
   };
 
   const changeStatus = async (id: string, newStatus: string) => {
+    const commission = commissions.find((c) => c.id === id);
     const update: any = { status: newStatus };
     if (newStatus === "approved") update.approved_at = new Date().toISOString();
     if (newStatus === "paid") update.paid_at = new Date().toISOString();
@@ -144,6 +145,20 @@ export default function Commissions() {
     const { error } = await supabase.from("commissions").update(update).eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Statut mis à jour");
+    // Notif push au setter/closer
+    if (commission && (newStatus === "approved" || newStatus === "paid")) {
+      supabase.functions.invoke("send-push", {
+        body: {
+          user_ids: [commission.user_id],
+          title: newStatus === "paid" ? "💰 Commission payée !" : "✅ Commission approuvée",
+          body: newStatus === "paid"
+            ? `Ta commission de ${Number(commission.commission_amount).toFixed(2)}€ pour "${commission.prospect_name}" a été payée.`
+            : `Ta commission de ${Number(commission.commission_amount).toFixed(2)}€ a été approuvée.`,
+          url: "/commissions",
+          tag: "commission-update",
+        },
+      });
+    }
     load();
   };
 
