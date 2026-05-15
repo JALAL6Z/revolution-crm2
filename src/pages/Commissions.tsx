@@ -145,15 +145,19 @@ export default function Commissions() {
     const { error } = await supabase.from("commissions").update(update).eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Statut mis à jour");
-    // Notif push au setter/closer
+    // Notif push au setter/closer avec nom de l'admin
     if (commission && (newStatus === "approved" || newStatus === "paid")) {
-      supabase.functions.invoke("send-push", {
+      const { data: senderProfile } = await supabase.from("profiles").select("full_name").eq("id", user!.id).maybeSingle();
+      const senderName = senderProfile?.full_name || "Revolution";
+      await supabase.functions.invoke("send-push", {
         body: {
           user_ids: [commission.user_id],
-          title: newStatus === "paid" ? "💰 Commission payée !" : "✅ Commission approuvée",
+          title: newStatus === "paid"
+            ? `💰 Payé par ${senderName} !`
+            : `✅ Approuvé par ${senderName}`,
           body: newStatus === "paid"
             ? `Ta commission de ${Number(commission.commission_amount).toFixed(2)}€ pour "${commission.prospect_name}" a été payée.`
-            : `Ta commission de ${Number(commission.commission_amount).toFixed(2)}€ a été approuvée.`,
+            : `Ta commission de ${Number(commission.commission_amount).toFixed(2)}€ pour "${commission.prospect_name}" a été approuvée.`,
           url: "/commissions",
           tag: "commission-update",
         },

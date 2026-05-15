@@ -224,13 +224,14 @@ export default function Prospects() {
     setAssigning(false);
     if (error) { toast.error(error.message); return; }
     toast.success(assignedTo ? "Prospects assignes" : "Assignation retiree");
-    // Notif push au setter
     if (assignedTo) {
-      supabase.functions.invoke("send-push", {
+      const { data: senderProfile } = await supabase.from("profiles").select("full_name").eq("id", user!.id).maybeSingle();
+      const senderName = senderProfile?.full_name || "Revolution";
+      await supabase.functions.invoke("send-push", {
         body: {
           user_ids: [assignedTo],
-          title: "🎯 Nouveaux prospects assignés",
-          body: `${ids.length} prospect${ids.length > 1 ? "s" : ""} vien${ids.length > 1 ? "nent" : "t"} de t'être assigné${ids.length > 1 ? "s" : ""}.`,
+          title: `🎯 ${ids.length} prospect${ids.length > 1 ? "s" : ""} — de ${senderName}`,
+          body: `${senderName} t'a assigné ${ids.length} prospect${ids.length > 1 ? "s" : ""}. Lance-toi !`,
           url: "/prospects",
           tag: "prospects-assigned",
         },
@@ -247,11 +248,13 @@ export default function Prospects() {
     if (error) { toast.error(error.message); return; }
     setProspects((prev) => prev.map((p) => p.id === id ? { ...p, assigned_to: assignedTo } : p));
     if (assignedTo && prospect) {
-      supabase.functions.invoke("send-push", {
+      const { data: senderProfile } = await supabase.from("profiles").select("full_name").eq("id", user!.id).maybeSingle();
+      const senderName = senderProfile?.full_name || "Revolution";
+      await supabase.functions.invoke("send-push", {
         body: {
           user_ids: [assignedTo],
-          title: "🎯 Nouveau prospect assigné",
-          body: `"${prospect.name}" vient de t'être assigné.`,
+          title: `🎯 Nouveau prospect — de ${senderName}`,
+          body: `"${prospect.name}" vient de t'être assigné par ${senderName}.`,
           url: "/prospects",
           tag: "prospect-assigned",
         },
