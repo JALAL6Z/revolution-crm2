@@ -17,7 +17,7 @@ import { useCurrentRole } from "@/hooks/useCurrentRole";
 import { isAdminRole } from "@/lib/access";
 import {
   Euro, TrendingUp, Clock, CheckCircle, Plus, Loader2,
-  Banknote, User, ChevronRight, AlertCircle, Trophy,
+  Banknote, User, ChevronRight, AlertCircle, Trophy, Trash2,
 } from "lucide-react";
 
 interface Commission {
@@ -133,6 +133,25 @@ export default function Commissions() {
     setApproving(null);
     if (error) { toast.error(error.message); return; }
     toast.success(action === "paid" ? "Commission marquée comme payée ✓" : "Commission approuvée");
+    load();
+  };
+
+  const changeStatus = async (id: string, newStatus: string) => {
+    const update: any = { status: newStatus };
+    if (newStatus === "approved") update.approved_at = new Date().toISOString();
+    if (newStatus === "paid") update.paid_at = new Date().toISOString();
+    if (newStatus === "requested") update.requested_at = new Date().toISOString();
+    const { error } = await supabase.from("commissions").update(update).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Statut mis à jour");
+    load();
+  };
+
+  const deleteCommission = async (id: string) => {
+    if (!confirm("Supprimer cette commission ?")) return;
+    const { error } = await supabase.from("commissions").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Commission supprimée");
     load();
   };
 
@@ -281,13 +300,26 @@ export default function Commissions() {
                     <p className="text-[10px] text-muted-foreground">commission</p>
                   </div>
 
-                  {/* Statut */}
-                  <Badge className={cn("gap-1 text-xs", st.color)}>
-                    <StatusIcon className="h-3 w-3" />{st.label}
-                  </Badge>
+                  {/* Statut — dropdown pour admin, badge pour membre */}
+                  {admin ? (
+                    <Select value={c.status} onValueChange={(v) => changeStatus(c.id, v)}>
+                      <SelectTrigger className={cn("h-8 w-[170px] text-xs font-semibold border rounded-full", st.color)}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(STATUS_CONFIG).map(([k, v]) => (
+                          <SelectItem key={k} value={k} className="text-xs">{v.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Badge className={cn("gap-1 text-xs", st.color)}>
+                      <StatusIcon className="h-3 w-3" />{st.label}
+                    </Badge>
+                  )}
 
                   {/* Actions */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
                     {/* Setter/Closer : demander paiement */}
                     {!admin && c.status === "pending" && (
                       <Button size="sm" variant="hero" className="h-8 text-xs"
@@ -297,21 +329,11 @@ export default function Commissions() {
                         Demander paiement
                       </Button>
                     )}
-                    {/* Admin : approuver ou marquer payé */}
-                    {admin && c.status === "requested" && (
-                      <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
-                        disabled={approving === c.id}
-                        onClick={() => approveCommission(c.id, "approved")}>
-                        {approving === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
-                        Approuver
-                      </Button>
-                    )}
-                    {admin && c.status === "approved" && (
-                      <Button size="sm" variant="hero" className="h-8 text-xs gap-1"
-                        disabled={approving === c.id}
-                        onClick={() => approveCommission(c.id, "paid")}>
-                        {approving === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Banknote className="h-3 w-3" />}
-                        Marquer payé
+                    {/* Admin : supprimer */}
+                    {admin && (
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => deleteCommission(c.id)}>
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
                   </div>
