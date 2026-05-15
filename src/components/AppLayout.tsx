@@ -174,7 +174,7 @@ export default function AppLayout() {
           </Sheet>
 
           <div className="md:hidden flex-1">
-            <Logo size="h-6" glow />
+            <Logo size="h-7" glow />
           </div>
 
           <div className="ml-auto flex items-center gap-1.5">
