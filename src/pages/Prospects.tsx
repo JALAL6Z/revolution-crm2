@@ -560,45 +560,81 @@ export default function Prospects() {
               </table>
             </div>
 
-            {/* Mobile card list */}
+            {/* ── Mobile cards — version complète ── */}
             <div className="sm:hidden divide-y divide-border">
               {filtered.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-start gap-3 p-4 active:bg-accent/30 cursor-pointer"
-                  onClick={() => navigate(`/prospects/${p.id}`)}
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                    {p.name.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold text-sm truncate">{p.name}</p>
-                      <Badge className={cn("text-[10px] shrink-0", STATUS[p.status as Status]?.color)}>
-                        {STATUS[p.status as Status]?.label}
-                      </Badge>
+                <div key={p.id} className="p-4 space-y-3">
+                  {/* Ligne 1 : nom + flèche */}
+                  <div className="flex items-start justify-between gap-2"
+                    onClick={() => navigate(`/prospects/${p.id}`)}>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-black text-primary">
+                        {p.name.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm leading-tight truncate">{p.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                          {p.city && <><MapPin className="h-3 w-3" />{p.city}</>}
+                          {p.city && p.sector && <span>·</span>}
+                          {p.sector && <span>{p.sector}</span>}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {[p.city, p.sector].filter(Boolean).join(" · ") || "—"}
-                    </p>
-                    <div className="flex items-center gap-3 mt-1.5">
-                      {p.phone && <a href={`tel:${p.phone}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 text-xs text-primary">
+                    <ArrowRight className="h-4 w-4 text-muted-foreground/50 shrink-0 mt-1" />
+                  </div>
+
+                  {/* Ligne 2 : badges site web + contact */}
+                  <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    {/* Site web */}
+                    {p.website ? (
+                      <a href={p.website} target="_blank" rel="noreferrer"
+                        className="inline-flex items-center gap-1 rounded-full bg-success/15 border border-success/20 px-2.5 py-1 text-[11px] font-semibold text-success">
+                        <ExternalLink className="h-2.5 w-2.5" />Site web
+                      </a>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-destructive/15 border border-destructive/20 px-2.5 py-1 text-[11px] font-semibold text-destructive">
+                        Sans site
+                      </span>
+                    )}
+                    {/* Téléphone cliquable */}
+                    {p.phone && (
+                      <a href={`tel:${p.phone}`}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-[11px] font-semibold text-primary">
                         <Phone className="h-3 w-3" />{p.phone}
-                      </a>}
-                    </div>
+                      </a>
+                    )}
+                    {/* Email */}
+                    {p.email && (
+                      <a href={`mailto:${p.email}`}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-accent border border-border px-2.5 py-1 text-[11px] font-semibold text-foreground">
+                        <Mail className="h-3 w-3" />{p.email}
+                      </a>
+                    )}
                   </div>
-                  <div className="flex flex-col items-center gap-1 mt-1">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+
+                  {/* Ligne 3 : statut (dropdown) + supprimer */}
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Select value={p.status} onValueChange={(v) => updateStatus(p.id, v as Status)}>
+                      <SelectTrigger className={cn("h-8 flex-1 text-xs font-semibold rounded-full border", STATUS[p.status as Status]?.color)}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(STATUS).map(([k, v]) => (
+                          <SelectItem key={k} value={k} className="text-xs">{v.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     {admin && (
-                      <button onClick={(e) => { e.stopPropagation(); deleteOne(p.id, p.name); }}
-                        className="h-6 w-6 flex items-center justify-center rounded hover:bg-destructive/15 hover:text-destructive transition-all">
-                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground/40" />
+                      <button onClick={() => deleteOne(p.id, p.name)}
+                        className="h-8 w-8 flex shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all">
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     )}
                   </div>
                 </div>
               ))}
             </div>
+
           </Card>
         ) : (
           <KanbanBoard

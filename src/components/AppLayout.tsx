@@ -159,7 +159,7 @@ export default function AppLayout() {
       {/* Main */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Topbar */}
-        <header className="crm-mobile-topbar sticky top-0 z-30 flex shrink-0 items-center gap-2 border-b border-border bg-background/80 backdrop-blur-md">
+        <header className="crm-mobile-topbar flex shrink-0 items-center gap-2 border-b border-border bg-background">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden" aria-label="Ouvrir le menu">

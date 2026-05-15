@@ -440,7 +440,7 @@ export default function ProspectDetail() {
   return (
     <div>
       {/* ── Header prospect redesigné ── */}
-      <div className="sticky top-0 z-10 border-b border-border/60 bg-background/95 backdrop-blur-md">
+      <div className="border-b border-border/60">
         {/* Ligne 1 : retour + nom + statut */}
         <div className="flex items-start gap-3 px-4 pt-4 pb-2 sm:px-6">
           <Button variant="ghost" size="sm" onClick={() => navigate("/prospects")} className="mt-0.5 shrink-0 -ml-1">
