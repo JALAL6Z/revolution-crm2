@@ -69,120 +69,92 @@ export default function Scraping() {
 
   return (
     <div>
-      <PageHeader
-        title="Scraping multi-sources"
-        description="Trouvez vos prospects en masse depuis Google Maps, Pappers, Hunter, Instagram, TikTok, LinkedIn"
-      >
-        <Badge variant="outline" className="gap-1">
-          <Sparkles className="h-3 w-3" /> Pipeline auto activé
+      <PageHeader title="Scraping" description="Trouvez des prospects en masse depuis toutes les sources">
+        <Badge variant="outline" className="gap-1 text-xs">
+          <Sparkles className="h-3 w-3" /> Pipeline auto
         </Badge>
       </PageHeader>
 
-      <div className="grid gap-6 p-6 lg:grid-cols-[1fr_360px]">
-        {/* MAIN */}
-        <div className="space-y-4">
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="flex h-auto flex-wrap gap-1 sm:grid sm:w-full sm:grid-cols-4 lg:grid-cols-8">
+      <div className="space-y-4 p-3 sm:p-6">
+        {/* ── Onglets sources ── */}
+        <Tabs value={tab} onValueChange={setTab}>
+          {/* Scroll horizontal sur mobile */}
+          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-1">
+            <TabsList className="flex w-max gap-1 sm:w-full sm:flex-wrap sm:h-auto">
               {SOURCES.map((s) => (
-                <TabsTrigger key={s.id} value={s.id} className="gap-1.5">
+                <TabsTrigger key={s.id} value={s.id} className="flex items-center gap-1.5 whitespace-nowrap text-xs px-3 py-2">
                   <s.icon className={`h-3.5 w-3.5 ${s.color}`} />
-                  <span className="hidden sm:inline">{s.label}</span>
+                  {s.label}
                 </TabsTrigger>
               ))}
             </TabsList>
-
-            <TabsContent value="google_maps" className="mt-4">
-              <GoogleMapsScraper onJobCreated={handleJobCreated} />
-            </TabsContent>
-            <TabsContent value="gsheets" className="mt-4">
-              <GoogleSheetsScraper />
-            </TabsContent>
-            <TabsContent value="pappers" className="mt-4">
-              <PappersScraper onJobCreated={handleJobCreated} />
-            </TabsContent>
-            <TabsContent value="hunter" className="mt-4">
-              <HunterScraper onJobCreated={handleJobCreated} />
-            </TabsContent>
-            <TabsContent value="instagram" className="mt-4">
-              <ApifyScraper platform="instagram" onJobCreated={handleJobCreated} />
-            </TabsContent>
-            <TabsContent value="tiktok" className="mt-4">
-              <ApifyScraper platform="tiktok" onJobCreated={handleJobCreated} />
-            </TabsContent>
-            <TabsContent value="linkedin" className="mt-4">
-              <ApifyScraper platform="linkedin" onJobCreated={handleJobCreated} />
-            </TabsContent>
-            <TabsContent value="csv" className="mt-4">
-              <CSVImporter onJobCreated={handleJobCreated} />
-            </TabsContent>
-          </Tabs>
-
-          {/* Active job */}
-          {activeJob && (
-            <Card className="p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold">Job en cours · {activeJob.source}</p>
-                  <p className="text-xs text-muted-foreground">{activeJob.status}</p>
-                </div>
-                <Badge variant={activeJob.status === "completed" ? "default" : activeJob.status === "failed" ? "destructive" : "secondary"}>
-                  {activeJob.status}
-                </Badge>
-              </div>
-              <Progress value={activeJob.progress ?? 0} className="h-2" />
-              {activeJob.error_message && (
-                <p className="mt-2 text-xs text-destructive">{activeJob.error_message}</p>
-              )}
-              {activeJob.status === "completed" && (
-                <p className="mt-2 text-xs text-success">
-                  ✓ {activeJob.results_count} résultats — {activeJob.duplicates_count} doublons détectés
-                </p>
-              )}
-            </Card>
-          )}
-
-          {/* Results */}
-          {activeJob && <ResultsPanel jobId={activeJob.id} />}
-        </div>
-
-        {/* SIDEBAR jobs history */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <History className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">Historique</h3>
           </div>
-          {recentJobs.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Aucun job pour l'instant.</p>
-          ) : (
-            recentJobs.map((j) => (
-              <Card
-                key={j.id}
-                className="cursor-pointer p-3 transition-all hover:border-primary/40"
-                onClick={() => setActiveJob(j)}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{j.name || j.source}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(j.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-                    </p>
+
+          <div className="mt-4">
+            <TabsContent value="google_maps"><GoogleMapsScraper onJobCreated={handleJobCreated} /></TabsContent>
+            <TabsContent value="gsheets"><GoogleSheetsScraper /></TabsContent>
+            <TabsContent value="pappers"><PappersScraper onJobCreated={handleJobCreated} /></TabsContent>
+            <TabsContent value="hunter"><HunterScraper onJobCreated={handleJobCreated} /></TabsContent>
+            <TabsContent value="instagram"><ApifyScraper platform="instagram" onJobCreated={handleJobCreated} /></TabsContent>
+            <TabsContent value="tiktok"><ApifyScraper platform="tiktok" onJobCreated={handleJobCreated} /></TabsContent>
+            <TabsContent value="linkedin"><ApifyScraper platform="linkedin" onJobCreated={handleJobCreated} /></TabsContent>
+            <TabsContent value="csv"><CSVImporter onJobCreated={handleJobCreated} /></TabsContent>
+          </div>
+        </Tabs>
+
+        {/* ── Job actif ── */}
+        {activeJob && (
+          <Card className="p-4 border-primary/30 bg-primary/5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold">Scraping en cours · {activeJob.source}</p>
+              <Badge variant={activeJob.status === "completed" ? "default" : activeJob.status === "failed" ? "destructive" : "secondary"}>
+                {activeJob.status}
+              </Badge>
+            </div>
+            <Progress value={activeJob.progress ?? 0} className="h-1.5" />
+            {activeJob.error_message && <p className="mt-2 text-xs text-destructive">{activeJob.error_message}</p>}
+            {activeJob.status === "completed" && (
+              <p className="mt-2 text-xs text-success">✓ {activeJob.results_count} résultats — {activeJob.duplicates_count} doublons ignorés</p>
+            )}
+          </Card>
+        )}
+
+        {/* ── Résultats ── */}
+        {activeJob && <ResultsPanel jobId={activeJob.id} />}
+
+        {/* ── Historique — accordéon, visible seulement si des jobs existent ── */}
+        {recentJobs.length > 0 && (
+          <details className="group">
+            <summary className="flex cursor-pointer items-center gap-2 rounded-lg border border-border px-4 py-3 text-sm font-medium hover:bg-accent/30 transition-colors list-none">
+              <History className="h-4 w-4 text-muted-foreground" />
+              <span>Historique des scrapes ({recentJobs.length})</span>
+              <span className="ml-auto text-muted-foreground text-xs group-open:hidden">Voir ▼</span>
+              <span className="ml-auto text-muted-foreground text-xs hidden group-open:inline">Masquer ▲</span>
+            </summary>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {recentJobs.map((j) => (
+                <Card key={j.id} className="cursor-pointer p-3 hover:border-primary/40 transition-all" onClick={() => setActiveJob(j)}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{j.name || j.source}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(j.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                      </p>
+                    </div>
+                    <Badge variant={j.status === "completed" ? "default" : j.status === "failed" ? "destructive" : "secondary"} className="text-[10px] shrink-0">
+                      {j.status}
+                    </Badge>
                   </div>
-                  <Badge
-                    variant={j.status === "completed" ? "default" : j.status === "failed" ? "destructive" : "secondary"}
-                    className="shrink-0 text-[10px]"
-                  >
-                    {j.status}
-                  </Badge>
-                </div>
-                <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{j.results_count} résultats</span>
-                  <span>{j.imported_count} importés</span>
-                </div>
-                {j.status === "running" && <Progress value={j.progress} className="mt-2 h-1" />}
-              </Card>
-            ))
-          )}
-        </div>
+                  <div className="mt-1.5 flex gap-3 text-xs text-muted-foreground">
+                    <span>{j.results_count} résultats</span>
+                    <span>{j.imported_count} importés</span>
+                  </div>
+                  {j.status === "running" && <Progress value={j.progress} className="mt-2 h-1" />}
+                </Card>
+              ))}
+            </div>
+          </details>
+        )}
       </div>
     </div>
   );
