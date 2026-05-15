@@ -78,6 +78,7 @@ export default function ProspectDetail() {
   const [seoAudit, setSeoAudit] = useState<any>(null);
   const [seoLoading, setSeoLoading] = useState(false);
   const [seoOpen, setSeoOpen] = useState(false);
+  const [enrichLoading, setEnrichLoading] = useState(false);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [invoiceLines, setInvoiceLines] = useState([{ description: "", qty: 1, price: 0 }]);
   const [invoiceComment, setInvoiceComment] = useState("");
@@ -382,6 +383,20 @@ export default function ProspectDetail() {
     iframe.onload = () => { iframe.contentWindow?.print(); };
   };
 
+  const enrichEmail = async () => {
+    setEnrichLoading(true);
+    const { data, error } = await supabase.functions.invoke("enrich-prospect", { body: { prospect_id: id } });
+    setEnrichLoading(false);
+    if (error || data?.error) { toast.error(data?.error ?? "Erreur enrichissement — configurez Hunter ou Dropcontact dans Paramètres"); return; }
+    if (data.already_had_email) { toast.info("Ce prospect a déjà un email"); return; }
+    if (data.email_found) {
+      toast.success(`✉️ Email trouvé : ${data.email_found} (confiance ${data.confidence}%)`);
+      load();
+    } else {
+      toast.error("Aucun email trouvé — essayez d'ajouter le site web du prospect");
+    }
+  };
+
   const runSeoAudit = async () => {
     if (!prospect.website) { toast.error("Ce prospect n'a pas de site web à auditer"); return; }
     setSeoLoading(true);
@@ -496,6 +511,12 @@ export default function ProspectDetail() {
             {offerLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Euro className="h-3.5 w-3.5" />}
             Offre
           </Button>
+          {admin && !prospect?.email && (
+            <Button size="sm" variant="outline" onClick={enrichEmail} disabled={enrichLoading} className="h-8 text-xs gap-1.5">
+              {enrichLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+              Trouver email
+            </Button>
+          )}
           {admin && prospect?.website && (
             <Button size="sm" variant="outline" onClick={runSeoAudit} disabled={seoLoading} className="h-8 text-xs gap-1.5">
               {seoLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <SearchCode className="h-3.5 w-3.5" />}

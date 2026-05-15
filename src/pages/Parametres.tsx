@@ -14,7 +14,7 @@ import { Settings as SettingsIcon, Save, Users, Key, Loader2, Shield, Check, X, 
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { AI_PROVIDER_CATALOG, FREE_SMMA_TOOLS, INTEGRATION_CHOICES } from "@/lib/integrations";
+import { AI_PROVIDER_CATALOG, ENRICHMENT_CATALOG, FREE_SMMA_TOOLS, INTEGRATION_CHOICES } from "@/lib/integrations";
 import { roleLabel } from "@/lib/access";
 
 interface Member { user_id: string; full_name: string | null; email?: string; role: string; }
@@ -239,7 +239,8 @@ export default function Parametres() {
           <TabsList>
             <TabsTrigger value="profile"><SettingsIcon className="mr-2 h-4 w-4" />Profil</TabsTrigger>
             <TabsTrigger value="team"><Users className="mr-2 h-4 w-4" />Equipe</TabsTrigger>
-            <TabsTrigger value="integrations"><Key className="mr-2 h-4 w-4" />Integrations</TabsTrigger>
+            <TabsTrigger value="enrichment"><PlugZap className="mr-2 h-4 w-4" />Enrichissement</TabsTrigger>
+            <TabsTrigger value="integrations"><Key className="mr-2 h-4 w-4" />IA</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile">
@@ -369,6 +370,53 @@ export default function Parametres() {
                 </table>
               </div>
             </Card>
+          </TabsContent>
+
+          {/* ── Enrichissement & Scraping ── */}
+          <TabsContent value="enrichment" className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Configurez vos clés API pour enrichir automatiquement les prospects (email, téléphone, données entreprise).
+              Le bouton <strong>"Trouver email"</strong> sur chaque fiche prospect utilise ces outils en cascade.
+            </p>
+            <div className="grid gap-3 md:grid-cols-2">
+              {ENRICHMENT_CATALOG.map((tool) => (
+                <Card key={tool.provider} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-sm">{tool.label}</p>
+                        <Badge variant={tool.cost === "free" ? "default" : tool.cost === "freemium" ? "secondary" : "outline"} className="text-[10px]">
+                          {tool.cost === "free" ? "Gratuit" : tool.cost === "freemium" ? "Freemium" : "Payant"}
+                        </Badge>
+                        {tool.recommended && <Badge className="text-[10px] bg-success/15 text-success">Recommandé</Badge>}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{tool.description}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Clé API</Label>
+                    <Input
+                      type="password"
+                      placeholder={`Clé ${tool.label}...`}
+                      onChange={async (e) => {
+                        if (!e.target.value.trim()) return;
+                        await supabase.from("integration_settings").upsert({
+                          provider: tool.provider,
+                          label: tool.label,
+                          kind: "enrichment",
+                          enabled: true,
+                          api_key: e.target.value.trim(),
+                          base_url: tool.baseUrlHint ?? null,
+                          priority: 50,
+                        }, { onConflict: "provider" });
+                        toast.success(`${tool.label} configuré`);
+                      }}
+                      className="text-xs h-8"
+                    />
+                  </div>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
           <TabsContent value="integrations" className="space-y-6">

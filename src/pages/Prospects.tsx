@@ -43,7 +43,7 @@ const SOURCE_LABELS: Record<Source, string> = {
   pages_jaunes: "Pages Jaunes", societe_com: "Societe.com", manual: "Manuel", referral: "Recommandation", website: "Site web",
 };
 
-const PAGE_SIZE = 200;
+const PAGE_SIZE = 2000;
 
 // ICP — Profils clients idéaux avec mots-clés secteur associés
 const ICP_FILTERS = [
