@@ -130,7 +130,7 @@
   .crm-mobile-topbar {
     min-height: calc(5.5rem + env(safe-area-inset-top, 59px));
     padding-top: env(safe-area-inset-top, 59px);
-    padding-bottom: 0.625rem;
+    padding-bottom: 1.25rem;
     padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
     padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
     display: flex;
