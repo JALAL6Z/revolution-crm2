@@ -1,0 +1,4 @@
+project_id = "fhihgvudsgntwpmzrngo"
+
+[functions.sequence-runner]
+verify_jwt = false

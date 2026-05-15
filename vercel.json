@@ -1,0 +1,14 @@
+{
+  "crons": [
+    {
+      "path": "/api/automation-runner",
+      "schedule": "0 8 * * *"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/((?!api/|assets/|favicon\\.png|apple-touch-icon\\.png|manifest\\.webmanifest|sw\\.js).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
