@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { normalizeSector } from "@/lib/sectorNormalizer";
+import { normalizeSector, detectCity } from "@/lib/sectorNormalizer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -154,13 +154,16 @@ export function GoogleSheetsScraper() {
         );
         if (sansOnlySite && hasSite) { skipped++; continue; }
         const rawSector = sectorOverride !== "auto" ? sectorOverride : (get("sector") || get("category") || "");
-        const sector = normalizeSector(rawSector);
+        const sector = normalizeSector(rawSector, name);
+        // Ville : depuis la colonne ou détection depuis le nom
+        const rawCity = get("city") || get("ville") || get("localisation") || get("location") || "";
+        const city = rawCity || detectCity(name) || null;
         toInsert.push({
           name,
           phone: get("phone") || null,
           email: get("email") || null,
           website: website || null,
-          city: get("city") || null,
+          city: city,
           sector: sector.toLowerCase(),
           source: "google_sheets",
           status: "a_contacter",
