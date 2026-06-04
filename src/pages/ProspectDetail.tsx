@@ -601,9 +601,9 @@ export default function ProspectDetail() {
               )}
             </div>
           </div>
-          {/* Assignation */}
+          {/* Assignation — masquée sur mobile, visible sm+ */}
           {admin && (
-            <div className="shrink-0">
+            <div className="hidden sm:block shrink-0">
               <Select value={prospect.assigned_to ?? "none"} onValueChange={(value) => assignProspect(value === "none" ? null : value)}>
                 <SelectTrigger className="h-8 w-[160px] text-xs">
                   <SelectValue placeholder="Assigner" />
@@ -621,51 +621,72 @@ export default function ProspectDetail() {
           )}
         </div>
 
-        {/* Ligne 2 : actions — flex-wrap, toujours visibles */}
-        <div className="flex flex-wrap items-center gap-1.5 px-4 pb-3 sm:px-6">
-          <Button size="sm" variant="outline" onClick={runCloser} disabled={callLoading} className="h-8 text-xs gap-1.5">
-            {callLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PhoneCall className="h-3.5 w-3.5" />}
-            Script
-          </Button>
-          <Button size="sm" variant="outline" onClick={runCompetitors} disabled={compLoading} className="h-8 text-xs gap-1.5">
-            {compLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Swords className="h-3.5 w-3.5" />}
-            Concurrents
-          </Button>
-          <Button size="sm" variant="outline" onClick={runOfferBuilder} disabled={offerLoading} className="h-8 text-xs gap-1.5">
-            {offerLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Euro className="h-3.5 w-3.5" />}
-            Offre
-          </Button>
-          {admin && !prospect?.email && (
-            <Button size="sm" variant="outline" onClick={enrichEmail} disabled={enrichLoading} className="h-8 text-xs gap-1.5">
-              {enrichLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
-              Trouver email
+        {/* Ligne 2 : actions — scroll horizontal sur mobile, flex-wrap sur desktop */}
+        <div className="overflow-x-auto scrollbar-none border-t border-border/40 sm:border-0">
+          <div className="flex items-center gap-1.5 px-4 py-2 sm:pb-3 sm:px-6 sm:flex-wrap min-w-max sm:min-w-0">
+            <Button size="sm" variant="outline" onClick={openRdv} className="h-9 sm:h-8 text-xs gap-1.5 border-warning/40 text-warning hover:bg-warning/10 shrink-0">
+              <CalendarClock className="h-3.5 w-3.5" />
+              RDV
             </Button>
-          )}
-          {admin && prospect?.website && (
-            <Button size="sm" variant="outline" onClick={runSeoAudit} disabled={seoLoading} className="h-8 text-xs gap-1.5">
-              {seoLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <SearchCode className="h-3.5 w-3.5" />}
-              Audit SEO
+            <Button size="sm" variant="hero" onClick={analyze} disabled={analyzing} className="h-9 sm:h-8 text-xs gap-1.5 shrink-0">
+              {analyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              {analysis ? "Re-analyser" : "Analyser IA"}
             </Button>
-          )}
-          {admin && (
-            <Button size="sm" variant="outline" onClick={handleGenerateSite} disabled={siteGenerating} className="h-8 text-xs gap-1.5">
-              {siteGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Monitor className="h-3.5 w-3.5" />}
-              Générer site
+            <div className="w-px h-5 bg-border/60 mx-0.5 shrink-0" />
+            <Button size="sm" variant="outline" onClick={runCloser} disabled={callLoading} className="h-8 text-xs gap-1.5 shrink-0">
+              {callLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PhoneCall className="h-3.5 w-3.5" />}
+              Script
             </Button>
-          )}
-          {admin && (
-            <Button size="sm" variant="outline" onClick={openInvoice} className="h-8 text-xs gap-1.5">
-              <Receipt className="h-3.5 w-3.5" />Facture
+            <Button size="sm" variant="outline" onClick={runCompetitors} disabled={compLoading} className="h-8 text-xs gap-1.5 shrink-0">
+              {compLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Swords className="h-3.5 w-3.5" />}
+              Concurrents
             </Button>
-          )}
-          <Button size="sm" variant="outline" onClick={openRdv} className="h-8 text-xs gap-1.5 border-warning/40 text-warning hover:bg-warning/10">
-            <CalendarClock className="h-3.5 w-3.5" />
-            Prendre RDV
-          </Button>
-          <Button size="sm" variant="hero" onClick={analyze} disabled={analyzing} className="h-8 text-xs gap-1.5 ml-auto">
-            {analyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {analysis ? "Re-analyser" : "Analyser IA"}
-          </Button>
+            <Button size="sm" variant="outline" onClick={runOfferBuilder} disabled={offerLoading} className="h-8 text-xs gap-1.5 shrink-0">
+              {offerLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Euro className="h-3.5 w-3.5" />}
+              Offre
+            </Button>
+            {admin && !prospect?.email && (
+              <Button size="sm" variant="outline" onClick={enrichEmail} disabled={enrichLoading} className="h-8 text-xs gap-1.5 shrink-0">
+                {enrichLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                Email
+              </Button>
+            )}
+            {admin && prospect?.website && (
+              <Button size="sm" variant="outline" onClick={runSeoAudit} disabled={seoLoading} className="h-8 text-xs gap-1.5 shrink-0">
+                {seoLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <SearchCode className="h-3.5 w-3.5" />}
+                SEO
+              </Button>
+            )}
+            {admin && (
+              <Button size="sm" variant="outline" onClick={handleGenerateSite} disabled={siteGenerating} className="h-8 text-xs gap-1.5 shrink-0">
+                {siteGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Monitor className="h-3.5 w-3.5" />}
+                Site
+              </Button>
+            )}
+            {admin && (
+              <Button size="sm" variant="outline" onClick={openInvoice} className="h-8 text-xs gap-1.5 shrink-0">
+                <Receipt className="h-3.5 w-3.5" />Facture
+              </Button>
+            )}
+            {/* Assignation mobile — visible uniquement sur mobile */}
+            {admin && (
+              <div className="sm:hidden shrink-0">
+                <Select value={prospect.assigned_to ?? "none"} onValueChange={(value) => assignProspect(value === "none" ? null : value)}>
+                  <SelectTrigger className="h-8 w-[140px] text-xs border-dashed">
+                    <SelectValue placeholder="Assigner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Non assigné</SelectItem>
+                    {members.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.full_name ?? "Membre"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -775,17 +796,25 @@ export default function ProspectDetail() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:gap-6 p-3 sm:p-6 lg:grid-cols-3">
         {/* Infos contact */}
-        <Card className="p-5 space-y-3 lg:col-span-1">
+        <Card className="p-4 sm:p-5 space-y-3 lg:col-span-1">
           <h3 className="font-semibold flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" /> Coordonnées</h3>
           <div className="space-y-2 text-sm">
             {prospect.contact_name && <p><span className="text-muted-foreground">Contact : </span>{prospect.contact_name}</p>}
             {prospect.dirigeant && <p><span className="text-muted-foreground">Dirigeant : </span>{prospect.dirigeant}</p>}
-            {prospect.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-muted-foreground" /><a href={`mailto:${prospect.email}`} className="text-primary hover:underline">{prospect.email}</a></p>}
-            {prospect.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-muted-foreground" /><a href={`tel:${prospect.phone}`} className="text-primary hover:underline">{prospect.phone}</a></p>}
-            {prospect.website && <p className="flex items-center gap-2"><Globe className="h-3.5 w-3.5 text-muted-foreground" /><a href={prospect.website} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{prospect.website}</a></p>}
-            {(prospect.address || prospect.city) && <p className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-muted-foreground" />{[prospect.address, prospect.zip, prospect.city].filter(Boolean).join(", ")}</p>}
+            {prospect.email && (
+              <a href={`mailto:${prospect.email}`} className="flex items-center gap-2 rounded-lg border border-border/50 px-3 py-2 text-primary hover:bg-accent transition-colors">
+                <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /><span className="truncate">{prospect.email}</span>
+              </a>
+            )}
+            {prospect.phone && (
+              <a href={`tel:${prospect.phone}`} className="flex items-center gap-2 rounded-lg border border-border/50 px-3 py-2.5 text-primary hover:bg-accent transition-colors font-medium">
+                <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />{prospect.phone}
+              </a>
+            )}
+            {prospect.website && <p className="flex items-center gap-2 text-xs"><Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /><a href={prospect.website} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{prospect.website}</a></p>}
+            {(prospect.address || prospect.city) && <p className="flex items-center gap-2 text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5 shrink-0" />{[prospect.address, prospect.zip, prospect.city].filter(Boolean).join(", ")}</p>}
           </div>
           <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
             {prospect.rating != null && prospect.rating > 0 && (
@@ -932,9 +961,10 @@ export default function ProspectDetail() {
                 const Icon = c.icon;
                 const hasMsg = messages.some((m) => m.channel === c.id);
                 return (
-                  <TabsTrigger key={c.id} value={c.id} className="gap-2">
-                    <Icon className={cn("h-4 w-4", c.color)} /> {c.label}
-                    {hasMsg && <span className="h-1.5 w-1.5 rounded-full bg-success" />}
+                  <TabsTrigger key={c.id} value={c.id} className="gap-1 px-1 sm:gap-2 sm:px-3">
+                    <Icon className={cn("h-4 w-4 shrink-0", c.color)} />
+                    <span className="hidden sm:inline">{c.label}</span>
+                    {hasMsg && <span className="h-1.5 w-1.5 rounded-full bg-success shrink-0" />}
                   </TabsTrigger>
                 );
               })}
@@ -1029,7 +1059,7 @@ export default function ProspectDetail() {
 
       {/* ── Dialog Prendre RDV ── */}
       <Dialog open={rdvOpen} onOpenChange={setRdvOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-lg rounded-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarClock className="h-5 w-5 text-warning" />
