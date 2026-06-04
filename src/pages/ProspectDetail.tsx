@@ -1071,7 +1071,7 @@ export default function ProspectDetail() {
               <Label>Titre du rendez-vous</Label>
               <Input value={rdvForm.title} onChange={e => setRdvForm(f => ({ ...f, title: e.target.value }))} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Date & heure</Label>
                 <Input type="datetime-local" value={rdvForm.scheduled_at}
