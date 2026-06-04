@@ -1074,26 +1074,10 @@ export default function ProspectDetail() {
               <Label>Titre du rendez-vous</Label>
               <Input value={rdvForm.title} onChange={e => setRdvForm(f => ({ ...f, title: e.target.value }))} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Date</Label>
-                <Input type="date" value={rdvForm.scheduled_at.slice(0, 10)}
-                  onChange={e => {
-                    const time = rdvForm.scheduled_at.slice(11, 16) || "10:00";
-                    const dt = `${e.target.value}T${time}`;
-                    setRdvForm(f => ({ ...f, scheduled_at: dt }));
-                    loadAvailability(dt);
-                  }} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Heure</Label>
-                <Input type="time" value={rdvForm.scheduled_at.slice(11, 16)}
-                  onChange={e => {
-                    const date = rdvForm.scheduled_at.slice(0, 10);
-                    const dt = `${date}T${e.target.value}`;
-                    setRdvForm(f => ({ ...f, scheduled_at: dt }));
-                  }} />
-              </div>
+            <div className="space-y-1.5">
+              <Label>Date & heure</Label>
+              <Input type="datetime-local" value={rdvForm.scheduled_at}
+                onChange={e => { setRdvForm(f => ({ ...f, scheduled_at: e.target.value })); loadAvailability(e.target.value); }} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
