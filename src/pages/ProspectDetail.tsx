@@ -16,7 +16,7 @@ import {
   ArrowLeft, Sparkles, ExternalLink, Phone, Mail, MapPin, Globe, Building2,
   Star, Users, TrendingUp, AlertTriangle, CheckCircle2, Loader2, Copy,
   Send, MessageCircle, Linkedin, Instagram, PhoneCall, Swords, X, Euro,
-  Repeat2, CalendarClock, Receipt, Monitor, SearchCode, ChevronDown, ChevronUp, CheckCircle,
+  Repeat2, CalendarClock, Receipt, Monitor, SearchCode, ChevronDown, ChevronUp, CheckCircle, Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -104,6 +104,10 @@ export default function ProspectDetail() {
   const [offer, setOffer] = useState<any>(null);
   const [offerLoading, setOfferLoading] = useState(false);
   const [sequenceLoading, setSequenceLoading] = useState<string | null>(null);
+  const [rdvOpen, setRdvOpen] = useState(false);
+  const [rdvLoading, setRdvLoading] = useState(false);
+  const [rdvForm, setRdvForm] = useState({ title: "", scheduled_at: "", duration_minutes: 30, type: "discovery", notes: "" });
+  const [availabilitySlots, setAvailabilitySlots] = useState<any[]>([]);
 
   const load = async () => {
     if (!id) return;
@@ -420,6 +424,119 @@ export default function ProspectDetail() {
     toast.success("Notes sauvegardées");
   };
 
+  const updateStatus = async (newStatus: string) => {
+    if (!id) return;
+    const prev = prospect?.status;
+    setProspect((p: any) => p ? { ...p, status: newStatus } : p);
+    const { error } = await supabase.from("prospects").update({ status: newStatus }).eq("id", id);
+    if (error) {
+      setProspect((p: any) => p ? { ...p, status: prev } : p);
+      toast.error(error.message);
+      return;
+    }
+    await logFunnelEvent({
+      event_type: "status_changed", entity_type: "prospect", entity_id: id, prospect_id: id,
+      source: prospect?.source, status_from: prev, status_to: newStatus,
+      metadata: { prospect_name: prospect?.name },
+    });
+    toast.success(`Statut : ${STATUS_LABELS[newStatus] ?? newStatus}`);
+  };
+
+  const loadAvailability = async (dateStr: string) => {
+    if (!dateStr) { setAvailabilitySlots([]); return; }
+    const d = new Date(dateStr);
+    const start = new Date(d); start.setHours(0, 0, 0, 0);
+    const end = new Date(d); end.setHours(23, 59, 59, 999);
+    const { data } = await supabase.from("appointments")
+      .select("title, scheduled_at, duration_minutes")
+      .gte("scheduled_at", start.toISOString())
+      .lte("scheduled_at", end.toISOString())
+      .order("scheduled_at");
+    setAvailabilitySlots(data ?? []);
+  };
+
+  const openRdv = () => {
+    const dt = new Date();
+    dt.setDate(dt.getDate() + 1);
+    dt.setHours(10, 0, 0, 0);
+    const iso = dt.toISOString().slice(0, 16);
+    setRdvForm({ title: `RDV — ${prospect.name}`, scheduled_at: iso, duration_minutes: 30, type: "discovery", notes: "" });
+    loadAvailability(iso);
+    setRdvOpen(true);
+  };
+
+  const bookRdv = async () => {
+    if (!rdvForm.title || !rdvForm.scheduled_at) { toast.error("Titre et date requis"); return; }
+    setRdvLoading(true);
+
+    const { error: apptErr } = await supabase.from("appointments").insert({
+      title: rdvForm.title,
+      scheduled_at: new Date(rdvForm.scheduled_at).toISOString(),
+      duration_minutes: Number(rdvForm.duration_minutes) || 30,
+      type: rdvForm.type,
+      notes: rdvForm.notes || null,
+      prospect_id: id,
+    });
+    if (apptErr) { toast.error(apptErr.message); setRdvLoading(false); return; }
+
+    const { error: statusErr } = await supabase.from("prospects").update({ status: "rdv_pris" }).eq("id", id!);
+    if (statusErr) { toast.error(statusErr.message); setRdvLoading(false); return; }
+
+    await logFunnelEvent({
+      event_type: "status_changed", entity_type: "prospect", entity_id: id, prospect_id: id,
+      source: prospect?.source, status_from: prospect?.status, status_to: "rdv_pris",
+      metadata: { prospect_name: prospect?.name, rdv_at: rdvForm.scheduled_at },
+    });
+
+    // Récupère le nom du setteur + les IDs admins en parallèle
+    const [{ data: { user } }, { data: adminRoles }] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase.from("user_roles").select("user_id").eq("role", "admin"),
+    ]);
+    const adminIds = (adminRoles ?? []).map((r: any) => r.user_id);
+
+    let setterName = "Un setteur";
+    if (user?.id) {
+      const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+      setterName = profile?.full_name || setterName;
+    }
+
+    const rdvDate = new Date(rdvForm.scheduled_at).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" });
+    const typeLabels: Record<string, string> = { discovery: "Découverte", demo: "Démo", closing: "Closing", followup: "Suivi" };
+
+    // Push notification → tous les admins
+    if (adminIds.length > 0) {
+      supabase.functions.invoke("send-push", {
+        body: {
+          user_ids: adminIds,
+          title: `📅 RDV pris — ${prospect.name}`,
+          body: `${setterName} · ${rdvDate} (${rdvForm.duration_minutes} min)`,
+          url: `/prospects/${id}`,
+          tag: "rdv-booked",
+        },
+      });
+    }
+
+    // Telegram → toi + Sofiane (via Edge Function, token côté serveur)
+    const telegramText = [
+      `📅 *Nouveau RDV pris*`,
+      ``,
+      `👤 *Prospect :* ${prospect.name}${prospect.sector ? ` — ${prospect.sector}` : ""}`,
+      `🙋 *Setteur :* ${setterName}`,
+      `🗓 *Date :* ${rdvDate}`,
+      `⏱ *Durée :* ${rdvForm.duration_minutes} min`,
+      `📌 *Type :* ${typeLabels[rdvForm.type] ?? rdvForm.type}`,
+      rdvForm.notes ? `📝 ${rdvForm.notes}` : null,
+    ].filter(Boolean).join("\n");
+
+    supabase.functions.invoke("send-telegram", { body: { text: telegramText } });
+
+    setRdvLoading(false);
+    toast.success("RDV planifié — statut mis à jour : RDV pris");
+    setRdvOpen(false);
+    load();
+  };
+
   const handleGenerateSite = () => {
     setSiteGenerating(true);
     try {
@@ -467,9 +584,16 @@ export default function ProspectDetail() {
             <div className="mt-1 flex flex-wrap items-center gap-2">
               {prospect.sector && <Badge variant="secondary" className="text-xs">{prospect.sector}</Badge>}
               {prospect.city && <span className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{prospect.city}</span>}
-              <Badge className={cn("text-[10px]", STATUS_COLORS[prospect.status as string] ?? "bg-muted text-muted-foreground")}>
-                {STATUS_LABELS[prospect.status as string] ?? prospect.status}
-              </Badge>
+              <Select value={prospect.status} onValueChange={updateStatus}>
+                <SelectTrigger className={cn("h-6 px-2 text-[10px] font-semibold rounded-full border w-auto gap-1", STATUS_COLORS[prospect.status as string] ?? "bg-muted text-muted-foreground")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(STATUS_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {prospect.analysis_score != null && (
                 <span className="text-xs font-semibold text-primary flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />Score {prospect.analysis_score}/100
@@ -534,6 +658,10 @@ export default function ProspectDetail() {
               <Receipt className="h-3.5 w-3.5" />Facture
             </Button>
           )}
+          <Button size="sm" variant="outline" onClick={openRdv} className="h-8 text-xs gap-1.5 border-warning/40 text-warning hover:bg-warning/10">
+            <CalendarClock className="h-3.5 w-3.5" />
+            Prendre RDV
+          </Button>
           <Button size="sm" variant="hero" onClick={analyze} disabled={analyzing} className="h-8 text-xs gap-1.5 ml-auto">
             {analyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
             {analysis ? "Re-analyser" : "Analyser IA"}
@@ -898,6 +1026,97 @@ export default function ProspectDetail() {
           />
         </Card>
       </div>
+
+      {/* ── Dialog Prendre RDV ── */}
+      <Dialog open={rdvOpen} onOpenChange={setRdvOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarClock className="h-5 w-5 text-warning" />
+              Planifier un RDV — {prospect.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Titre du rendez-vous</Label>
+              <Input value={rdvForm.title} onChange={e => setRdvForm(f => ({ ...f, title: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Date & heure</Label>
+                <Input type="datetime-local" value={rdvForm.scheduled_at}
+                  onChange={e => { setRdvForm(f => ({ ...f, scheduled_at: e.target.value })); loadAvailability(e.target.value); }} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Durée</Label>
+                <Select value={String(rdvForm.duration_minutes)} onValueChange={v => setRdvForm(f => ({ ...f, duration_minutes: Number(v) }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="15">15 min</SelectItem>
+                    <SelectItem value="30">30 min</SelectItem>
+                    <SelectItem value="45">45 min</SelectItem>
+                    <SelectItem value="60">1h</SelectItem>
+                    <SelectItem value="90">1h30</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Type de RDV</Label>
+              <Select value={rdvForm.type} onValueChange={v => setRdvForm(f => ({ ...f, type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="discovery">Découverte</SelectItem>
+                  <SelectItem value="demo">Démo</SelectItem>
+                  <SelectItem value="closing">Closing</SelectItem>
+                  <SelectItem value="followup">Suivi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Notes</Label>
+              <Textarea value={rdvForm.notes} onChange={e => setRdvForm(f => ({ ...f, notes: e.target.value }))} rows={3} placeholder="Objectif du RDV, points à aborder..." className="resize-none text-sm" />
+            </div>
+
+            {/* Disponibilités du jour */}
+            {availabilitySlots.length > 0 ? (
+              <div className="rounded-lg border border-warning/30 bg-warning/5 p-3">
+                <p className="text-xs font-semibold text-warning mb-2 flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" /> RDV déjà planifiés ce jour-là
+                </p>
+                <div className="space-y-1.5">
+                  {availabilitySlots.map((slot, i) => (
+                    <div key={i} className="text-xs text-muted-foreground flex items-center gap-2">
+                      <span className="font-semibold text-foreground">
+                        {new Date(slot.scheduled_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                      <span>—</span>
+                      <span>{slot.title}</span>
+                      <span className="text-muted-foreground/60">({slot.duration_minutes ?? 30} min)</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : rdvForm.scheduled_at ? (
+              <div className="rounded-lg border border-success/30 bg-success/5 p-3 text-xs text-success font-medium flex items-center gap-2">
+                <CheckCircle className="h-3.5 w-3.5" /> Créneau libre ce jour-là
+              </div>
+            ) : null}
+
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-primary flex items-start gap-2">
+              <CalendarClock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              Le statut sera automatiquement mis à jour vers <strong className="ml-1">RDV pris</strong>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRdvOpen(false)}>Annuler</Button>
+            <Button variant="hero" onClick={bookRdv} disabled={rdvLoading}>
+              {rdvLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarClock className="h-4 w-4" />}
+              Confirmer le RDV
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Dialog Audit SEO ── */}
       <Dialog open={seoOpen} onOpenChange={setSeoOpen}>
