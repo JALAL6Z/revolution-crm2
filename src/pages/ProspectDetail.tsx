@@ -1059,24 +1059,27 @@ export default function ProspectDetail() {
 
       {/* ── Dialog Prendre RDV ── */}
       <Dialog open={rdvOpen} onOpenChange={setRdvOpen}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-lg rounded-xl">
-          <DialogHeader>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-lg rounded-xl flex flex-col max-h-[90dvh] p-0 gap-0">
+          {/* Header fixe */}
+          <DialogHeader className="px-5 pt-5 pb-4 border-b border-border shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <CalendarClock className="h-5 w-5 text-warning" />
               Planifier un RDV — {prospect.name}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+
+          {/* Corps scrollable */}
+          <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
             <div className="space-y-1.5">
               <Label>Titre du rendez-vous</Label>
               <Input value={rdvForm.title} onChange={e => setRdvForm(f => ({ ...f, title: e.target.value }))} />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Date & heure</Label>
-                <Input type="datetime-local" value={rdvForm.scheduled_at}
-                  onChange={e => { setRdvForm(f => ({ ...f, scheduled_at: e.target.value })); loadAvailability(e.target.value); }} />
-              </div>
+            <div className="space-y-1.5">
+              <Label>Date & heure</Label>
+              <Input type="datetime-local" value={rdvForm.scheduled_at}
+                onChange={e => { setRdvForm(f => ({ ...f, scheduled_at: e.target.value })); loadAvailability(e.target.value); }} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Durée</Label>
                 <Select value={String(rdvForm.duration_minutes)} onValueChange={v => setRdvForm(f => ({ ...f, duration_minutes: Number(v) }))}>
@@ -1090,25 +1093,24 @@ export default function ProspectDetail() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Type de RDV</Label>
-              <Select value={rdvForm.type} onValueChange={v => setRdvForm(f => ({ ...f, type: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="discovery">Découverte</SelectItem>
-                  <SelectItem value="demo">Démo</SelectItem>
-                  <SelectItem value="closing">Closing</SelectItem>
-                  <SelectItem value="followup">Suivi</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-1.5">
+                <Label>Type de RDV</Label>
+                <Select value={rdvForm.type} onValueChange={v => setRdvForm(f => ({ ...f, type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="discovery">Découverte</SelectItem>
+                    <SelectItem value="demo">Démo</SelectItem>
+                    <SelectItem value="closing">Closing</SelectItem>
+                    <SelectItem value="followup">Suivi</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Notes</Label>
-              <Textarea value={rdvForm.notes} onChange={e => setRdvForm(f => ({ ...f, notes: e.target.value }))} rows={3} placeholder="Objectif du RDV, points à aborder..." className="resize-none text-sm" />
+              <Textarea value={rdvForm.notes} onChange={e => setRdvForm(f => ({ ...f, notes: e.target.value }))} rows={2} placeholder="Objectif du RDV, points à aborder..." className="resize-none text-sm" />
             </div>
 
-            {/* Disponibilités du jour */}
             {availabilitySlots.length > 0 ? (
               <div className="rounded-lg border border-warning/30 bg-warning/5 p-3">
                 <p className="text-xs font-semibold text-warning mb-2 flex items-center gap-1.5">
@@ -1121,15 +1123,15 @@ export default function ProspectDetail() {
                         {new Date(slot.scheduled_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                       <span>—</span>
-                      <span>{slot.title}</span>
-                      <span className="text-muted-foreground/60">({slot.duration_minutes ?? 30} min)</span>
+                      <span className="truncate">{slot.title}</span>
+                      <span className="shrink-0 text-muted-foreground/60">({slot.duration_minutes ?? 30} min)</span>
                     </div>
                   ))}
                 </div>
               </div>
             ) : rdvForm.scheduled_at ? (
               <div className="rounded-lg border border-success/30 bg-success/5 p-3 text-xs text-success font-medium flex items-center gap-2">
-                <CheckCircle className="h-3.5 w-3.5" /> Créneau libre ce jour-là
+                <CheckCircle className="h-3.5 w-3.5 shrink-0" /> Créneau libre ce jour-là
               </div>
             ) : null}
 
@@ -1138,13 +1140,17 @@ export default function ProspectDetail() {
               Le statut sera automatiquement mis à jour vers <strong className="ml-1">RDV pris</strong>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRdvOpen(false)}>Annuler</Button>
-            <Button variant="hero" onClick={bookRdv} disabled={rdvLoading}>
+
+          {/* Footer fixe */}
+          <div className="px-5 pb-5 pt-3 border-t border-border shrink-0 flex flex-col gap-2">
+            <Button variant="hero" onClick={bookRdv} disabled={rdvLoading} className="w-full">
               {rdvLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarClock className="h-4 w-4" />}
               Confirmer le RDV
             </Button>
-          </DialogFooter>
+            <Button variant="outline" onClick={() => setRdvOpen(false)} className="w-full">
+              Annuler
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
