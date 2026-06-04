@@ -1059,7 +1059,7 @@ export default function ProspectDetail() {
 
       {/* ── Dialog Prendre RDV ── */}
       <Dialog open={rdvOpen} onOpenChange={setRdvOpen}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-lg rounded-xl flex flex-col max-h-[90dvh] p-0 gap-0">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-lg rounded-xl flex flex-col max-h-[90dvh] p-0 gap-0 overflow-x-hidden">
           {/* Header fixe */}
           <DialogHeader className="px-5 pt-5 pb-4 border-b border-border shrink-0">
             <DialogTitle className="flex items-center gap-2">
@@ -1076,7 +1076,7 @@ export default function ProspectDetail() {
             </div>
             <div className="space-y-1.5">
               <Label>Date & heure</Label>
-              <Input type="datetime-local" value={rdvForm.scheduled_at}
+              <Input type="datetime-local" value={rdvForm.scheduled_at} className="h-10"
                 onChange={e => { setRdvForm(f => ({ ...f, scheduled_at: e.target.value })); loadAvailability(e.target.value); }} />
             </div>
             <div className="grid grid-cols-2 gap-3">
