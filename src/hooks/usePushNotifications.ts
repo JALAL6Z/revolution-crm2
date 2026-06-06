@@ -20,6 +20,24 @@ export function usePushNotifications() {
     setSupported("serviceWorker" in navigator && "PushManager" in window);
   }, []);
 
+  // Auto-détecte un abonnement existant au chargement
+  useEffect(() => {
+    if (!supported || !user) return;
+    navigator.serviceWorker.ready.then((reg) => {
+      reg.pushManager.getSubscription().then((sub) => {
+        if (!sub) return;
+        setSubscribed(true);
+        // Resynchronise en base au cas où l'endpoint aurait changé
+        supabase.from("push_subscriptions" as any).upsert({
+          user_id: user.id,
+          endpoint: sub.endpoint,
+          p256dh: btoa(String.fromCharCode(...new Uint8Array(sub.getKey("p256dh")!))),
+          auth: btoa(String.fromCharCode(...new Uint8Array(sub.getKey("auth")!))),
+        }, { onConflict: "user_id" });
+      });
+    });
+  }, [user, supported]);
+
   const subscribe = async () => {
     if (!supported || !user) return;
     try {
