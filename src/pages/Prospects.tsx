@@ -23,12 +23,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCurrentRole } from "@/hooks/useCurrentRole";
 import { canReceiveProspects, isAdminRole, roleLabel } from "@/lib/access";
 
-type Status = "a_contacter" | "contacte" | "rdv_pris" | "rdv_effectue" | "proposition" | "negociation" | "client" | "perdu" | "injoignable";
+type Status = "a_contacter" | "contacte" | "a_rappeler" | "rdv_pris" | "rdv_effectue" | "proposition" | "negociation" | "client" | "perdu" | "injoignable";
 type Source = "google_maps" | "linkedin" | "instagram" | "tiktok" | "pages_jaunes" | "societe_com" | "manual" | "referral" | "website";
 
 const STATUS: Record<Status, { label: string; color: string }> = {
   a_contacter: { label: "À contacter", color: "bg-muted text-foreground" },
   contacte: { label: "Contacté", color: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+  a_rappeler: { label: "À rappeler", color: "bg-orange-500/15 text-orange-400 border-orange-500/30" },
   rdv_pris: { label: "RDV pris", color: "bg-warning/15 text-warning border-warning/30" },
   rdv_effectue: { label: "RDV effectué", color: "bg-warning/15 text-warning border-warning/30" },
   proposition: { label: "Proposition", color: "bg-primary/15 text-primary border-primary/30" },

@@ -27,13 +27,14 @@ import { canReceiveProspects, isAdminRole, roleLabel } from "@/lib/access";
 import { generateSiteHtml } from "@/lib/siteGenerator";
 
 const STATUS_LABELS: Record<string, string> = {
-  a_contacter: "À contacter", contacte: "Contacté", rdv_pris: "RDV pris",
+  a_contacter: "À contacter", contacte: "Contacté", a_rappeler: "À rappeler", rdv_pris: "RDV pris",
   rdv_effectue: "RDV effectué", proposition: "Proposition", negociation: "Négociation",
   client: "Client", perdu: "Perdu", injoignable: "Injoignable",
 };
 const STATUS_COLORS: Record<string, string> = {
   a_contacter: "bg-muted text-muted-foreground",
   contacte: "bg-blue-500/15 text-blue-400",
+  a_rappeler: "bg-orange-500/15 text-orange-400",
   rdv_pris: "bg-warning/15 text-warning",
   rdv_effectue: "bg-warning/15 text-warning",
   proposition: "bg-primary/15 text-primary",
@@ -699,19 +700,34 @@ export default function ProspectDetail() {
               <Button variant="ghost" size="icon" onClick={() => setCallScript(null)}><X className="h-4 w-4" /></Button>
             </div>
             <div className="space-y-3 text-sm">
-              <div><div className="text-xs uppercase font-semibold text-primary">Ouverture</div><p className="mt-1">{callScript.opening}</p></div>
-              <div><div className="text-xs uppercase font-semibold text-primary">Questions de découverte</div><ul className="mt-1 list-disc pl-5 space-y-1">{(callScript.discovery_questions ?? []).map((q: string, i: number) => <li key={i}>{q}</li>)}</ul></div>
-              <div><div className="text-xs uppercase font-semibold text-primary">Propositions de valeur</div><ul className="mt-1 list-disc pl-5 space-y-1">{(callScript.value_props ?? []).map((v: string, i: number) => <li key={i}>{v}</li>)}</ul></div>
+              {/* Phrase signature */}
+              <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 text-center">
+                <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">La phrase signature</p>
+                <p className="font-semibold text-sm">"10h récupérées. 10 chantiers de plus. Sans rien changer."</p>
+              </div>
+              <div><div className="text-xs uppercase font-semibold text-primary">Ouverture</div><p className="mt-1 italic bg-muted/30 rounded p-2">{callScript.opening}</p></div>
               {callScript.call_plan?.length > 0 && <div><div className="text-xs uppercase font-semibold text-primary">Plan d'appel</div><ol className="mt-1 list-decimal pl-5 space-y-1">{callScript.call_plan.map((s: string, i: number) => <li key={i}>{s}</li>)}</ol></div>}
+              <div><div className="text-xs uppercase font-semibold text-primary">Questions de découverte</div><ul className="mt-1 list-disc pl-5 space-y-1">{(callScript.discovery_questions ?? []).map((q: string, i: number) => <li key={i}>{q}</li>)}</ul></div>
+              {callScript.lead_magnets?.length > 0 && <div className="rounded-lg bg-success/10 border border-success/20 p-3"><div className="text-xs uppercase font-semibold text-success mb-2">Stats à placer — Lead Magnets</div><ul className="space-y-1">{callScript.lead_magnets.map((l: string, i: number) => <li key={i} className="text-xs font-semibold">• {l}</li>)}</ul></div>}
+              <div><div className="text-xs uppercase font-semibold text-primary">Propositions de valeur</div><ul className="mt-1 list-disc pl-5 space-y-1">{(callScript.value_props ?? []).map((v: string, i: number) => <li key={i}>{v}</li>)}</ul></div>
+              {callScript.competitor_handling && <div className="rounded-lg bg-warning/10 border border-warning/20 p-3"><div className="text-xs uppercase font-semibold text-warning mb-1">Face aux concurrents</div><p className="text-sm">{callScript.competitor_handling}</p></div>}
               {callScript.discovery_diagnosis && <div className="rounded-lg border border-border p-3"><div className="text-xs uppercase font-semibold text-primary">Diagnostic à creuser</div><p className="mt-1 text-muted-foreground">{callScript.discovery_diagnosis}</p></div>}
               <div><div className="text-xs uppercase font-semibold text-primary">Objections & réponses</div>
                 <div className="mt-2 space-y-2">{(callScript.objections ?? []).map((o: any, i: number) => (
                   <div key={i} className="rounded-lg border border-border p-3"><div className="font-medium">❓ {o.objection}</div><p className="mt-1 text-muted-foreground">→ {o.response}</p></div>
                 ))}</div>
               </div>
-              <div><div className="text-xs uppercase font-semibold text-primary">Closing</div><p className="mt-1">{callScript.closing}</p></div>
-              {callScript.simulation?.length > 0 && <div><div className="text-xs uppercase font-semibold text-primary">Simulation</div><div className="mt-2 space-y-2">{callScript.simulation.map((s: any, i: number) => <div key={i} className="rounded-lg border border-border p-3"><p><span className="font-medium">Prospect :</span> {s.prospect_says}</p><p className="mt-1 text-muted-foreground"><span className="font-medium text-foreground">Closer :</span> {s.closer_replies}</p></div>)}</div></div>}
-              {callScript.proposal_angle && <div className="rounded-lg bg-success/10 border border-success/20 p-3"><div className="text-xs uppercase font-semibold text-success">Angle proposition</div><p className="mt-1">{callScript.proposal_angle}</p></div>}
+              <div><div className="text-xs uppercase font-semibold text-primary">Closing — Décrocher le RDV</div><p className="mt-1 italic bg-muted/30 rounded p-2">{callScript.closing}</p></div>
+              {callScript.whatsapp_message && (
+                <div className="rounded-lg border border-green-500/30 bg-green-500/5 p-3">
+                  <div className="text-xs uppercase font-semibold text-green-500 mb-2 flex items-center gap-1.5">
+                    <MessageCircle className="h-3.5 w-3.5" /> Message WhatsApp à envoyer dans l'heure
+                  </div>
+                  <p className="text-xs whitespace-pre-wrap text-muted-foreground">{callScript.whatsapp_message}</p>
+                </div>
+              )}
+              {callScript.simulation?.length > 0 && <div><div className="text-xs uppercase font-semibold text-primary">Simulation</div><div className="mt-2 space-y-2">{callScript.simulation.map((s: any, i: number) => <div key={i} className="rounded-lg border border-border p-3"><p><span className="font-medium">Prospect :</span> {s.prospect_says}</p><p className="mt-1 text-muted-foreground"><span className="font-medium text-foreground">Setter :</span> {s.closer_replies}</p></div>)}</div></div>}
+              {callScript.proposal_angle && <div className="rounded-lg bg-success/10 border border-success/20 p-3"><div className="text-xs uppercase font-semibold text-success">Angle RDV — Pitcher le pack</div><p className="mt-1">{callScript.proposal_angle}</p></div>}
               {callScript.post_call_summary_template && <div><div className="text-xs uppercase font-semibold text-primary">Résumé après appel</div><p className="mt-1 whitespace-pre-wrap text-muted-foreground">{callScript.post_call_summary_template}</p></div>}
               <div className="rounded-lg bg-primary/10 border border-primary/20 p-3"><div className="text-xs uppercase font-semibold text-primary">Tonalité</div><p className="mt-1">{callScript.tone_advice}</p></div>
             </div>

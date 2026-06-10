@@ -43,47 +43,44 @@ Deno.serve(async (req) => {
       type: "function",
       function: {
         name: "build_call_script",
-        description: "Script d'appel structuré pour closer un prospect",
+        description: "Script d'appel cold call expert adapté à l'offre Revolution Agency",
         parameters: {
           type: "object",
           properties: {
-            opening: { type: "string", description: "Pitch d'ouverture personnalisé (3-4 phrases max)" },
-            discovery_questions: { type: "array", items: { type: "string" }, description: "5 à 7 questions de découverte ouvertes" },
-            value_props: { type: "array", items: { type: "string" }, description: "3 propositions de valeur ciblées sur ses pain points" },
+            opening: { type: "string", description: "Ouverture mot pour mot — 20 secondes max, accroche chiffrée, confirmer décideur" },
+            discovery_questions: { type: "array", items: { type: "string" }, description: "5 questions de découverte qui font mal — adaptées au secteur, parlent de temps perdu et chantiers manqués" },
+            lead_magnets: { type: "array", items: { type: "string" }, description: "3 stats/chiffres impactants adaptés au secteur du prospect (ex: 'un plombier perd 24 000€/an en devis non envoyés')" },
+            value_props: { type: "array", items: { type: "string" }, description: "3 propositions de valeur concrètes sans jargon tech — en termes de temps récupéré et chantiers gagnés" },
+            competitor_handling: { type: "string", description: "Comment répondre si le prospect dit 'j'ai déjà reçu des appels d'autres agences' — différenciation claire vs concurrents" },
             objections: {
               type: "array",
               items: {
                 type: "object",
-                properties: {
-                  objection: { type: "string" },
-                  response: { type: "string" },
-                },
+                properties: { objection: { type: "string" }, response: { type: "string" } },
                 required: ["objection", "response"],
                 additionalProperties: false,
               },
-              description: "Top 5 objections probables avec réponse de closing",
+              description: "6 objections types avec réponse de closing — inclure 'j'ai déjà essayé' et 'j'ai un logiciel à 200€/an'",
             },
-            closing: { type: "string", description: "Phrase de closing + proposition d'agenda concret" },
-            tone_advice: { type: "string", description: "Conseil court sur le ton à adopter avec ce prospect" },
-            call_plan: { type: "array", items: { type: "string" }, description: "Plan d'appel étape par étape en 5-7 points" },
-            discovery_diagnosis: { type: "string", description: "Ce qu'il faut chercher à diagnostiquer pendant l'appel" },
+            closing: { type: "string", description: "Fermeture pour décrocher un RDV de 20 min + message WhatsApp audit à envoyer dans l'heure" },
+            tone_advice: { type: "string", description: "Conseil de ton adapté à ce prospect précis — secteur, profil, contexte" },
+            call_plan: { type: "array", items: { type: "string" }, description: "Plan d'appel étape par étape en 6 points avec timing" },
+            discovery_diagnosis: { type: "string", description: "Ce qu'il faut diagnostiquer — douleurs spécifiques à son secteur et situation actuelle" },
             simulation: {
               type: "array",
               items: {
                 type: "object",
-                properties: {
-                  prospect_says: { type: "string" },
-                  closer_replies: { type: "string" },
-                },
+                properties: { prospect_says: { type: "string" }, closer_replies: { type: "string" } },
                 required: ["prospect_says", "closer_replies"],
                 additionalProperties: false,
               },
-              description: "Mini simulation de 4 échanges réalistes",
+              description: "5 échanges réalistes incluant au moins un 'j'ai déjà été appelé' et un 'j'ai pas le temps'",
             },
-            post_call_summary_template: { type: "string", description: "Template de résumé après appel prêt à remplir" },
-            proposal_angle: { type: "string", description: "Angle à utiliser si une proposition commerciale est envoyée après l'appel" },
+            whatsapp_message: { type: "string", description: "Message WhatsApp audit à envoyer dans l'heure après l'appel — personnalisé avec les données du prospect" },
+            post_call_summary_template: { type: "string", description: "Template de résumé après appel à remplir" },
+            proposal_angle: { type: "string", description: "Angle commercial pour le RDV de présentation — comment pitcher le pack 450€ + 599€/mois" },
           },
-          required: ["opening", "discovery_questions", "value_props", "objections", "closing", "tone_advice", "call_plan", "discovery_diagnosis", "simulation", "post_call_summary_template", "proposal_angle"],
+          required: ["opening", "discovery_questions", "lead_magnets", "value_props", "competitor_handling", "objections", "closing", "tone_advice", "call_plan", "discovery_diagnosis", "simulation", "whatsapp_message", "post_call_summary_template", "proposal_angle"],
           additionalProperties: false,
         },
       },
@@ -93,47 +90,84 @@ Deno.serve(async (req) => {
 Secteur: ${p.sector ?? "—"} | Ville: ${p.city ?? "—"}
 Site web: ${p.website ? `${p.website} (${p.ai_note?.includes("INACCESSIBLE") ? "NE FONCTIONNE PAS" : "existant"})` : "AUCUN SITE"}
 Avis Google: ${p.reviews_count ? `${p.reviews_count} avis · ${p.rating}/5` : "inconnu"}
-Pain points identifiés: ${(p.pain_points ?? []).join(", ") || "à découvrir pendant l'appel"}
+Pain points identifiés: ${(p.pain_points ?? []).join(", ") || "à découvrir"}
 Services recommandés: ${(p.recommended_services ?? []).join(", ") || "à qualifier"}
 Note IA: ${p.ai_note ?? "—"}
 Dirigeant: ${p.dirigeant ?? "—"}`;
 
     const { parsed, provider } = await callAI({
       provider: "auto",
-      systemPrompt: `Tu es un closer d'élite pour Revolution Agency, une SMMA full-service.
+      systemPrompt: `Tu es Warda (ou Sabri), setter expert cold call pour Revolution Agency. Tu as 2 ans d'expérience en prospection téléphonique sur des artisans et commerçants. Tu connais par cœur l'offre et tu sais que les prospects ont DÉJÀ reçu des appels de concurrents qui leur parlent d'automatisation ou de site web.
 
-NOTRE POSITIONNEMENT DIFFÉRENCIANT : Nous aidons TOUS les types de business, même ceux avec un site web. Notre vraie valeur = automatisation et génération de clients automatique.
+═══ L'OFFRE REVOLUTION AGENCY ═══
 
-Ce qu'on vend selon le prospect :
-- Pas de site → Site vitrine pro + SEO local (argument : "vos concurrents vous volent des clients")
-- Site qui ne fonctionne pas → Refonte urgente + raison de perte de clients
-- Site OK mais peu de clients → Google Ads local + Meta Ads (ROI mesurable en 30 jours)
-- Beaucoup d'avis Google → Stratégie réputation + campagnes ciblées sur ce signal fort
-- Artisan/service → Automatisation devis PDF, relances clients, agenda en ligne, rappels SMS
-- Restaurant → Système réservation auto + Meta Ads + gestion avis Google
-- Commerce → Automatisation commandes, relances paniers abandonnés, fidélisation auto
-- Tout prospect → Toujours mentionner l'automatisation comme gain de temps concret (ex: "plus de devis manuels", "relances faites automatiquement pendant que vous travaillez")
+PACK PRO (à pitcher en priorité) : 450€ setup + 599€/mois
+• Système de devis depuis le téléphone (PDF automatique au client)
+• Relances automatiques devis non signés (J+2, J+5, J+14)
+• Google My Business optimisé + photos + réponses aux avis
+• Google Ads local géré chaque semaine + rapport mensuel des appels générés
+• Site vitrine mobile-first si absent ou cassé
+• Agenda en ligne + prise de RDV automatique quand il est sur chantier
+• Support WhatsApp direct
 
-Style : Chris Voss (empathie tactique, mirroring) + direct + concret. Zéro blabla. Script court et actionnable.`,
-      userPrompt: `${objective ? `Objectif de l'appel: ${objective}\n` : ""}Prépare un script d'appel${tone ? ` (ton: ${tone})` : ""} hyper-personnalisé pour ce prospect. Intègre TOUJOURS un angle automatisation adapté à leur secteur :
-${ctx}`,
+PACK ESSENTIEL (si blocage ferme) : 450€ setup + 399€/mois
+• Même chose sans Google Ads
+
+L'ARGUMENT MASSUE : "Une agence Google Ads seule vous coûte 400 à 500€/mois. Là c'est le pack complet pour 599€."
+
+VS CONCURRENT À 200€/AN : "Un logiciel de devis à 200€/an, ça génère pas un seul chantier de plus. Nous on vous génère les demandes ET on gère vos devis — c'est pas la même chose."
+
+═══ LA PHRASE SIGNATURE ═══
+"On vous fait récupérer 10h par semaine et on vous génère 10 chantiers de plus par mois — sans que vous changiez votre façon de travailler."
+
+═══ LES CHIFFRES À PLACER ═══
+• 480h perdues/an sur l'administratif = 24 000€ de chantiers non réalisés (à 50€/h)
+• 30% des devis ne sont jamais signés par manque de relance
+• 2 à 3 chantiers perdus/mois à cause des appels manqués sur chantier
+• ROI minimum 3x : 7 188€/an pour 599€/mois
+• 80% des clients vérifient Google avant d'appeler, même recommandés
+
+═══ RÈGLES ABSOLUES ═══
+1. Ne jamais dire "IA", "intelligence artificielle" ou "automatisation" — dire "système", "outil", "c'est automatique"
+2. Ne jamais parler de prix avant d'avoir dit "un chantier ça représente combien pour vous ?"
+3. L'objectif de l'appel = décrocher un RDV de 20 min, PAS vendre
+4. Style : Chris Voss (mirroring, empathie tactique) + direct + chiffres concrets
+5. Écouter 70%, parler 30%
+
+═══ FACE AUX CONCURRENTS ═══
+Quand le prospect dit "j'ai déjà reçu des appels" :
+→ "Ils vous ont parlé de quoi exactement ? (écouter) Voilà la différence avec nous : on ne vend pas un outil, on vous amène les chantiers. On gère tout nous-mêmes — le Google Ads, la fiche, les devis, les relances. Vous, vous répondez juste aux appels des nouveaux clients."`,
+
+      userPrompt: `${objective ? `Objectif spécifique: ${objective}\n` : ""}Génère un script d'appel cold call EXPERT, mot pour mot, ultra-personnalisé pour ce prospect.
+
+Adapte TOUT au secteur "${p.sector ?? "artisan/commerçant"}" :
+- Les questions de découverte doivent parler de ses douleurs réelles (ex: pour un plombier → devis sur chantier, appels manqués urgences)
+- Les lead magnets = stats chiffrées qui font mal dans son secteur précis
+- Le ton adapté à son profil (${p.reviews_count ? `${p.reviews_count} avis → il a une activité établie` : "pas d'avis → il débute ou se passe de Google"})
+
+Données prospect :
+${ctx}
+
+IMPORTANT : Le prospect a probablement déjà reçu des appels d'autres agences qui lui parlent de "site web" ou "automatisation". Différencie-toi dès l'ouverture en parlant de temps et d'argent concrets, pas de technologie.`,
       tool,
       toolName: "build_call_script",
     });
 
-    // Construit un script texte complet pour réutilisation/export
     const fullScript = [
       `=== OUVERTURE ===`, parsed.opening,
-      ``, `=== QUESTIONS DE DÉCOUVERTE ===`, ...(parsed.discovery_questions ?? []).map((q: string, i: number) => `${i + 1}. ${q}`),
-      ``, `=== PROPOSITIONS DE VALEUR ===`, ...(parsed.value_props ?? []).map((v: string) => `• ${v}`),
-      ``, `=== OBJECTIONS / RÉPONSES ===`, ...(parsed.objections ?? []).map((o: any) => `❓ ${o.objection}\n→ ${o.response}`),
-      ``, `=== CLOSING ===`, parsed.closing,
-      ``, `=== TONALITÉ ===`, parsed.tone_advice,
       ``, `=== PLAN D'APPEL ===`, ...(parsed.call_plan ?? []).map((s: string, i: number) => `${i + 1}. ${s}`),
+      ``, `=== QUESTIONS DE DÉCOUVERTE ===`, ...(parsed.discovery_questions ?? []).map((q: string, i: number) => `${i + 1}. ${q}`),
+      ``, `=== LEAD MAGNETS — STATS À PLACER ===`, ...(parsed.lead_magnets ?? []).map((l: string) => `• ${l}`),
+      ``, `=== PROPOSITIONS DE VALEUR ===`, ...(parsed.value_props ?? []).map((v: string) => `• ${v}`),
+      ``, `=== FACE AUX CONCURRENTS ===`, parsed.competitor_handling,
+      ``, `=== OBJECTIONS / RÉPONSES ===`, ...(parsed.objections ?? []).map((o: any) => `❓ ${o.objection}\n→ ${o.response}`),
+      ``, `=== CLOSING + AGENDA ===`, parsed.closing,
+      ``, `=== MESSAGE WHATSAPP APRÈS APPEL ===`, parsed.whatsapp_message,
       ``, `=== DIAGNOSTIC À CREUSER ===`, parsed.discovery_diagnosis,
-      ``, `=== SIMULATION ===`, ...(parsed.simulation ?? []).map((s: { prospect_says: string; closer_replies: string }) => `Prospect: ${s.prospect_says}\nCloser: ${s.closer_replies}`),
+      ``, `=== SIMULATION ===`, ...(parsed.simulation ?? []).map((s: { prospect_says: string; closer_replies: string }) => `Prospect: ${s.prospect_says}\nSetter: ${s.closer_replies}`),
       ``, `=== RÉSUMÉ APRÈS APPEL ===`, parsed.post_call_summary_template,
-      ``, `=== ANGLE PROPOSITION ===`, parsed.proposal_angle,
+      ``, `=== ANGLE PROPOSITION RDV ===`, parsed.proposal_angle,
+      ``, `=== TONALITÉ ===`, parsed.tone_advice,
     ].join("\n");
 
     // Sauvegarde dans call_scripts (historique)
@@ -153,8 +187,11 @@ ${ctx}`,
         pain_points: p.pain_points,
         recommended_services: p.recommended_services,
         call_plan: parsed.call_plan,
+        lead_magnets: parsed.lead_magnets,
+        competitor_handling: parsed.competitor_handling,
         discovery_diagnosis: parsed.discovery_diagnosis,
         simulation: parsed.simulation,
+        whatsapp_message: parsed.whatsapp_message,
         post_call_summary_template: parsed.post_call_summary_template,
         proposal_angle: parsed.proposal_angle,
       },
